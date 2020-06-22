@@ -1,0 +1,108 @@
+﻿@page "/concursante"
+@using Atodoonada_Blazor_App.Data
+@inject ConcursanteService objConcService
+
+
+<NavLink class="nav-link">
+    <span class="oi oi-plus" aria-hidden="true">Add New</span>
+</NavLink>
+
+<h1>Informacion de los concursantes</h1>
+
+
+<!-- <label for="">Nombre</label>
+<input name="Nombre" placeholder="Nombre" @bind="Nombre" />
+<label for="">Apellido</label>
+<input name="Apellido" placeholder="Apellido" @bind="Apellido" />
+<label for="">Edad</label>
+<input name="Edad" placeholder="Edad" @bind="Edad" />
+<label for="">Concurso</label>
+<input name="Concurso" placeholder="Concurso" @bind="Concurso" />
+<button @onclick="AddConcursante">Agregar Concursante</button>
+<br />
+<br /> -->
+
+@if (objConc == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Edad</th>
+                <th>Concurso</th>
+                <th>Accion</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var conc in objConc)
+            {
+                <tr>
+                    <td>@conc.id</td>
+                    <td>@conc.nombre</td>
+                    <td>@conc.apellido</td>
+                    <td>@conc.edad</td>
+                    <td>@conc.concurso</td>
+                    <td>
+                        <a class="btn btn-default" href="EditConcursante/@conc.id">Editar</a>
+                        <a class="btn btn-danger" href="DeleteConcursante/@conc.id">Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    List<ConcursanteInfo> objConc;
+
+    protected override async Task OnInitializedAsync()
+    {
+        objConc = await Task.Run(() => objConcService.GetConcursante());
+    }
+
+    // Initialize SearchTerm for searching names and to "" to prevent null's
+    //   string SearchApellido { get; set; } = "";
+
+    // List of the inscriptions
+    //private IList<Data.ConcursanteInfo> concursantes = new List<Data.ConcursanteInfo>();
+
+    // Private variables for the new inscriptions
+    //  private int newID = 0;
+    //private string Nombre, Apellido, Concurso;
+    //   private int Edad;
+
+    //Search Inscriptions By Full Name
+    //   List<Data.ConcursanteInfo> FilteredConcursantes => concursantes.Where(inscription => inscription.apellido.ToLower().Contains(SearchApellido.ToLower())).ToList();
+
+    //  private void AddConcursante()
+    //{
+    // Inscription: Add/Update the inscription
+    //     if (!string.IsNullOrWhiteSpace(Nombre) || !string.IsNullOrWhiteSpace(Apellido) || !string.IsNullOrWhiteSpace(Concurso))
+    //     {
+    //  newID += 1;
+    // concursantes.Add(new Data.ConcursanteInfo { id = newID, nombre = Nombre, apellido=Apellido, edad=Edad, concurso=Concurso});
+    // Nombre = string.Empty;
+    // Apellido = string.Empty;
+    //  Edad = 0;
+    //  Concurso = string.Empty;
+    //      }
+    //}
+
+
+    // private void RemoveInscription(int removeID)
+    // {
+    // Inscription: remove the inscription
+    //     {
+    //   concursantes.Remove(concursantes.First(concursante => concursante.id == removeID));
+
+    //   }
+    //}
+}
