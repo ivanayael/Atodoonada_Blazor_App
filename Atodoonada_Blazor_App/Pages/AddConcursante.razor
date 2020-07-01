@@ -1,66 +1,173 @@
-﻿@page "/AddConcursante"
+﻿@page "/addconcursante"
 @using Atodoonada_Blazor_App.Data
 @inject ConcursanteService objConcService
+@inject AptoFisicoService objAFService
 @inject NavigationManager NavigationManager
+@inject IModalService Modal
+
+<h1>Informacion de los concursantes</h1>
+
+@if (objConc == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <section>
 
 
-<h3>Agregar Concursante</h3>
+        <div class="row">
+            <div class="col-md-8">
+                <EditForm Model="@objConc" OnValidSubmit="ShowModal" OnInvalidSubmit="@HandleInvalidSubmit">
+                    <div class="alert @StatusClass">@StatusMessage</div>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
 
+                    <div class="form-group">
+                        <label for="Nombre" class="control-label">Nombre</label>
+                        <InputText @bind-style="nombreStyle" @bind-style:event="onchange" id="Nombre" @bind-Value="objConc.nombre" class="form-control"></InputText>
+                        <ValidationMessage For="@(() => objConc.nombre)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Apellido" class="control-label">Apellido</label>
+                        <InputText id="Apellido" @bind-Value="objConc.apellido" class="form-control"></InputText>
+                        <ValidationMessage For="@(() => objConc.apellido)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Edad" class="control-label">Edad</label>
+                        <InputNumber id="Edad" @bind-Value="objConc.edad" class="form-control"></InputNumber>
+                        <ValidationMessage For="@(() => objConc.edad)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Concurso" class="control-label">Concurso</label>
+                        <InputSelect id="Concurso" @bind-Value="objConc.concurso" class="form-control">
+                            <option value="">---Seleccione Tipo de Concurso----</option>
+                            <option value="Lingote">Lingote</option>
+                            <option value="Responder Preguntas">Responder Preguntas</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => objConc.concurso)" />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">Guardar</button>
+                                <button type="button" @onclick="Cancelar" class="btn btn-secondary">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
 
-<form>
-    <div class="row">
-        <div class="col-md-8">
-            <div class="form-group">
-                <label for="Nombre" class="control-label">Nombre</label>
-                <input form="Nombre" class="form-control" @bind="objConc.nombre" />
-            </div>
-            <div class="form-group">
-                <label for="Apellido" class="control-label">Apellido</label>
-                <input form="Apellido" class="form-control" @bind="objConc.apellido" />
-            </div>
-            <div class="form-group">
-                <label for="Edad" class="control-label">Edad</label>
-                <input form="Edad" class="form-control" @bind="objConc.edad" />
-            </div>
-            <div class="form-group">
-                <label for="Concurso" class="control-label"></label>
-                <select @bind="objConc.concurso" class="form-control">
-                    <option value="">---Seleccione Tipo de Concurso----</option>
-                    <option value="Lingote">Lingote</option>
-                    <option value="Responder Preguntas">Responder Preguntas</option>
-                </select>
-            </div>
         </div>
 
-    </div>
-    <div class="row">
-        <div class="col-md-4">
-            <div class="form-group">
-                <input type="button" class="btn btn-primary" @onclick="@CreateConcursante" value="Guardar" />
-                <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancelar" />
+    </section>
 
-            </div>
-        </div>
-    </div>
 
-</form>
+}
 
 @code {
-    ConcursanteInfo objConc = new ConcursanteInfo();
+
+    private String StatusMessage;
+    private String StatusClass;
+
+    private string nombreStyle = "color:blue";
+
+    public Data.Concursante objConc = new Data.Concursante();
+
+    public Data.AptoFisico objAF = new Data.AptoFisico();
+
+    // protected void HandleValidSubmit()
+    //  {
+    //      StatusClass = "alert-info";
+    //      StatusMessage = DateTime.Now + " Los datos se ingresaron correctamente.";
+    //
+    //  }
+
+    protected async Task ShowModal()
+    {
+
+        if (objConc.concurso == "Lingote" && objConc.edad >= 18)
+        {
+            var ConcursanteModal = Modal.Show<AptoFisico>(objConc.apellido);
+            var result = await ConcursanteModal.Result;
+
+            if (result.Cancelled)
+            {
+                StatusClass = "alert-danger";
+                StatusMessage = DateTime.Now + ": El apto fisico se encuentra vencido. No puede participar";
+                Error();
+            }
+            else
+            {
+                StatusClass = "alert-success";
+                StatusMessage = DateTime.Now + ": Se ingreso el apto fisico correctamente. Puede participar";
+                CreateConcursante();
+            }
+        }
+        else if (objConc.concurso == "Lingote" && objConc.edad < 18)
+        {
+            StatusClass = "alert-info";
+            StatusMessage = DateTime.Now + ": Participantes menores de 18 años deberán estar debidamente autorizados por sus padres, por lo cual para el caso de participación de menores de edad, las presentes Bases deberán ser aceptadas por sus padres, representantes legales o tutores ";
+            CreateConcursante();
+
+        }
+
+        else if (objConc.concurso == "Responder Preguntas" && objConc.edad >= 60)
+        {
+            StatusClass = "alert-danger";
+            StatusMessage = DateTime.Now + ": El participante no tiene la edad requerida para participar. Debe ser menor de 60 años.";
+            Error();
+        }
+        else if (objConc.concurso == "Responder Preguntas" && objConc.edad < 18)
+        {
+            StatusClass = "alert-info";
+            StatusMessage = DateTime.Now + ": Participantes menores de 18 años deberán estar debidamente autorizados por sus padres, por lo cual para el caso de participación de menores de edad, las presentes Bases deberán ser aceptadas por sus padres, representantes legales o tutores ";
+            CreateConcursante();
+        }
+        else if (objConc.concurso == "Responder Preguntas" && (objConc.edad >= 18 || objConc.edad < 60))
+        {
+            StatusClass = "alert-success";
+            StatusMessage = DateTime.Now + ": Puede participar del concurso de Responder Preguntas";
+            CreateConcursante();
+
+        }
+        else
+        {
+            StatusClass = "alert-danger";
+            StatusMessage = DateTime.Now + ": Se ingresaron datos invalidos o no se completaron los datos";
+            Error();
+        }
+
+    }
+
+
+
+    protected void HandleInvalidSubmit()
+    {
+        StatusClass = "alert-danger";
+        StatusMessage = DateTime.Now + " Se ingresaron datos invalidos o no se completaron los datos";
+        Console.WriteLine(StatusMessage);
+    }
+
 
     protected void CreateConcursante()
     {
-        if (objConc.edad >= 60)
-        {
-          
-        }
 
         objConcService.Create(objConc);
-        NavigationManager.NavigateTo("Concursante");
+        NavigationManager.NavigateTo("ListConcursante");
+        Console.WriteLine(StatusMessage);
+    }
 
-    }
-    void Cancel()
+    protected void Cancelar()
     {
-        NavigationManager.NavigateTo("Concursante");
+        Console.WriteLine(StatusMessage);
+        NavigationManager.NavigateTo("ListConcursante");
     }
+
+    protected void Error()
+    {
+        Console.WriteLine(StatusMessage);
+        NavigationManager.NavigateTo("AddConcursante");
+    }
+
 }

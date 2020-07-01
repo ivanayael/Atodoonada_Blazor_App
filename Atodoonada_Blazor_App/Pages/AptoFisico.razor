@@ -1,0 +1,102 @@
+﻿@page "/aptofisico"
+@using Atodoonada_Blazor_App.Data
+@inject AptoFisicoService objAptService
+@inject NavigationManager NavigationManager
+
+<h1>Informacion de Apto Fisico del Concursante @BlazoredModal.Title </h1>
+
+
+
+@if (objAptoFisico == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <section>
+        <div class="row">
+            <div class="col-md-8">
+                <EditForm Model="@objAptoFisico" OnValidSubmit="CreateAptoFisico" OnInvalidSubmit="HandleInvalidSubmit">
+                    <div class="alert @StatusClass">@StatusMessage</div>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-group">
+                        <label for="FechaEmision" class="control-label">Ingrese la Fecha de emision de su ultimo Apto fisico</label>
+                        <InputDate id="FechaEmision" name="FechaEmision" @bind-Value="objAptoFisico.FechaEmision" class="form-control" />
+                        <ValidationMessage For="@(()=> objAptoFisico.FechaEmision)" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">Verificar</button>
+                                <button @onclick="Cancelar" class="btn btn-secondary">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </section>
+
+}
+
+@code {
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; }
+
+
+    bool ShowForm { get; set; } = true;
+
+    int FormId { get; set; }
+
+    private String StatusMessage;
+    private String StatusClass;
+
+
+
+    public Data.AptoFisico objAptoFisico = new Data.AptoFisico();
+
+    protected void HandleInvalidSubmit()
+    {
+        StatusClass = "alert-danger";
+        StatusMessage = DateTime.Now + " Error al ingresar la fecha de apto fisico";
+    }
+
+    void Cancelar()
+    {
+        BlazoredModal.Cancel();
+    }
+
+
+    protected void CreateAptoFisico()
+    {
+
+        DateTime FechaDeHoy = DateTime.Today;
+
+        var DiferenciaEnDias = (DateTime.Now - objAptoFisico.FechaEmision).TotalDays;
+
+        if (DiferenciaEnDias <= 365 && objAptoFisico.FechaEmision < FechaDeHoy)
+        {
+            StatusClass = "alert-info";
+            StatusMessage = "El Apto Fisco esta en vigencia. Puede concursar";
+            objAptoFisico.PuedeParticipar = true;
+            objAptService.Create(objAptoFisico);
+            BlazoredModal.Close(ModalResult.Ok(objAptoFisico.id));
+
+        }
+        else
+        {
+            objAptoFisico.PuedeParticipar = false;
+            objAptService.Create(objAptoFisico);
+            StatusClass = "alert-danger";
+            StatusMessage = "La fecha del Apto fisico no es valida o ha caducado. No puede participar. Ingrese otro apto fisico para el participante";
+
+        }
+
+
+    }
+
+
+}

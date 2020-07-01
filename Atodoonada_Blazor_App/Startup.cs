@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Atodoonada_Blazor_App.Data;
 using Microsoft.EntityFrameworkCore;
+using Blazored.Modal;
 
 namespace Atodoonada_Blazor_App
 {
@@ -29,11 +30,11 @@ namespace Atodoonada_Blazor_App
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<WeatherForecastService>();
-            services.AddDbContext<ApplicationDBContext>(options =>
-            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-            ) 
-        
+            //  services.AddSingleton<ConcursanteService>();
+            services.AddBlazoredModal();
+            services.AddScoped<ConcursanteService>();
+            services.AddScoped<AptoFisicoService>();
+            services.AddDbContext<ApplicationDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));    
         
         }
 

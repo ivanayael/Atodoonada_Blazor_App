@@ -1,5 +1,65 @@
-﻿<h3>DeleteConcursante</h3>
+﻿@page "/DeleteConcursante/{CurrentID}"
+@using Atodoonada_Blazor_App.Data
+@inject ConcursanteService objConcService
+@inject NavigationManager NavigationManager
+
+
+<h3>Eliminar Concursante</h3>
+<h2>¿Estas seguro de que deseas eliminar este concursante?</h2>
+
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label>ID:</label>
+                <label>@objConc.id</label>
+            </div>
+            <div class="form-group">
+                <label style="color:blue">Nombre:</label>
+                <label style="color:blue">@objConc.nombre</label>
+            </div>
+            <div class="form-group">
+                <label>Apellido:</label>
+                <label>@objConc.apellido</label>
+            </div>
+            <div class="form-group">
+                <label>Edad:</label>
+                <label>@objConc.edad</label>
+            </div>
+            <div class="form-group">
+                <label>Concurso</label>
+                <label>@objConc.concurso</label>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <input type="button" class="btn btn-primary" @onclick="@DeleteConcInfo" value="Eliminar" />
+                <input type="button" class="btn btn-secondary" @onclick="@Cancel" value="Cancelar" />
+
+            </div>
+        </div>
+    </div>
 
 @code {
+    [Parameter]
+    public string CurrentID { get; set; }
+    Data.Concursante objConc = new Data.Concursante();
 
+    protected override async Task OnInitializedAsync()
+    {
+        objConc = await Task.Run(() => objConcService.GetConcursanteById(Convert.ToInt32(CurrentID)));
+    }
+
+    protected void DeleteConcInfo()
+    {
+        objConcService.DeleteConcInfo(objConc);
+        NavigationManager.NavigateTo("ListConcursante");
+
+    }
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("ListConcursante");
+    }
 }

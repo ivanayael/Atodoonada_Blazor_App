@@ -1,0 +1,79 @@
+﻿@page "/listconcursante"
+@page "/"
+@using Atodoonada_Blazor_App.Data
+@inject ConcursanteService objConcService
+@inject NavigationManager NavigationManager
+
+
+
+<h1>Informacion de los concursantes</h1>
+
+<p>Cantidad de Concursantes: (@objConcList.Count())</p>
+
+
+
+@if (objConcList == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+
+    <a class="btn btn-primary" href="AddConcursante">Agregar Concursante</a>
+
+    <section>
+        <h4>Lista de Concursante </h4>
+        <div class="form-group">
+            <label for="SearchApellido" class="control-label">Buscar Concursante Por Apellido</label>
+            <input id="SearchApellido" @bind-value="SearchApellido" @bind-value:event="oninput" class="form-control" />
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Edad</th>
+                    <th>Concurso</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var conc in FilteredConcursantes)
+                {
+                    <tr>
+                        <td>@conc.id</td>
+                        <td style="color:blue">@conc.nombre</td>
+                        <td>@conc.apellido</td>
+                        <td>@conc.edad</td>
+                        <td>@conc.concurso</td>
+                        <td>
+                            <a class="btn btn-primary" href="EditConcursante/@conc.id">Editar</a>
+                            <a class="btn btn-danger" href="DeleteConcursante/@conc.id">Eliminar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+
+}
+
+@code {
+
+    string SearchApellido { get; set; } = "";
+
+    IList<Data.Concursante> objConcList = new List<Data.Concursante>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        objConcList = await Task.Run(() => objConcService.GetConcursante());
+
+    }
+
+    List<Data.Concursante> FilteredConcursantes => objConcList.Where(c => c.apellido.ToLower().Contains(SearchApellido.ToLower())).ToList();
+
+
+
+}

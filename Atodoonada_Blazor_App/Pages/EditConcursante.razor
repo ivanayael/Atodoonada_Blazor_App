@@ -2,71 +2,165 @@
 @using Atodoonada_Blazor_App.Data
 @inject ConcursanteService objConcService
 @inject NavigationManager NavigationManager
-
+@inject IModalService Modal
 
 <h3>Modificar Concursante</h3>
 
 
-<form>
-    <div class="row">
-        <div class="col-md-8">
+
+<div class="row">
+    <div class="col-md-8">
+        <EditForm Model="@objConc" OnValidSubmit="ShowModal" OnInvalidSubmit="@HandleInvalidSubmit">
+            <div class="alert @StatusClass">@StatusMessage</div>
+            <DataAnnotationsValidator />
+            <ValidationSummary />
             <div class="form-group">
-                <label for="ID" class="control-label">ID</label>
-                <input form="ID" class="form-control" @bind="objConc.id" />
+                <input form="ID" hidden @bind="objConc.id" />
             </div>
             <div class="form-group">
                 <label for="Nombre" class="control-label">Nombre</label>
-                <input form="Nombre" class="form-control" @bind="objConc.nombre" />
+                <InputText id="Nombre" @bind-style="nombreStyle" @bind-style:event="onchange" @bind-Value="objConc.nombre" class="form-control"></InputText>
+                <ValidationMessage For="@(()=> objConc.nombre)" />
             </div>
             <div class="form-group">
                 <label for="Apellido" class="control-label">Apellido</label>
-                <input form="Apellido" class="form-control" @bind="objConc.apellido" />
+                <InputText id="Apellido" @bind-Value="objConc.apellido" class="form-control"></InputText>
+                <ValidationMessage For="@(()=> objConc.apellido)" />
             </div>
             <div class="form-group">
                 <label for="Edad" class="control-label">Edad</label>
-                <input form="Edad" class="form-control" @bind="objConc.edad" />
+                <InputNumber id="Edad" @bind-Value="objConc.edad" class="form-control"></InputNumber>
+                <ValidationMessage For="@(()=> objConc.edad)" />
             </div>
             <div class="form-group">
-                <label for="Concurso" class="control-label"></label>
-                <select @bind="objConc.concurso" class="form-control">
+                <label for="Concurso" class="control-label">Concurso</label>
+                <InputSelect id="Concurso" @bind-Value="objConc.concurso" class="form-control">
                     <option value="">---Seleccione Tipo de Concurso----</option>
                     <option value="Lingote">Lingote</option>
                     <option value="Responder Preguntas">Responder Preguntas</option>
-                </select>
+                </InputSelect>
+                <ValidationMessage For="@(()=> objConc.concurso)" />
             </div>
-        </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Actualizar</button>
+                        <button type="button" @onclick="@Cancelar" class="btn btn-secondary">Cancelar</button>
 
-    </div>
-    <div class="row">
-        <div class="col-md-4">
-            <div class="form-group">
-                <input type="button" class="btn btn-primary" @onclick="@UpdateConcursante" value="Actualizar" />
-                <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancelar" />
-
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-</form>
+        </EditForm>
+    </div>
+</div>
+
 
 @code {
+
+
     [Parameter]
     public string CurrentID { get; set; }
-    ConcursanteInfo objConc = new ConcursanteInfo();
+
+    private String StatusMessage;
+    private String StatusClass;
+
+    private string nombreStyle = "color:blue";
+
+    Data.Concursante objConc = new Data.Concursante();
 
     protected override async Task OnInitializedAsync()
     {
-        objConc = await Task.Run(()=>objConcService.GetConcursanteById(Convert.ToInt32(CurrentID)));
+        objConc = await Task.Run(() => objConcService.GetConcursanteById(Convert.ToInt32(CurrentID)));
     }
+
+
+    protected void HandleInvalidSubmit()
+    {
+        StatusClass = "alert-danger";
+        StatusMessage = DateTime.Now + " Se ingresaron datos invalidos o no se completaron los datos";
+        Console.WriteLine(StatusMessage);
+    }
+
+    protected async Task ShowModal()
+    {
+
+        if (objConc.concurso == "Lingote" && objConc.edad >= 18)
+        {
+            var ConcursanteModal = Modal.Show<AptoFisico>(objConc.apellido);
+            var result = await ConcursanteModal.Result;
+
+            if (result.Cancelled)
+            {
+                StatusClass = "alert-danger";
+                StatusMessage = DateTime.Now + ": El apto fisico se encuentra vencido. No puede participar";
+                Error();
+            }
+            else
+            {
+                StatusClass = "alert-success";
+                StatusMessage = DateTime.Now + ": Se ingreso el apto fisico correctamente. Puede participar";
+                UpdateConcursante();
+            }
+        }
+        else if (objConc.concurso == "Lingote" && objConc.edad < 18)
+        {
+            StatusClass = "alert-info";
+            StatusMessage = DateTime.Now + ": Participantes menores de 18 años deberán estar debidamente autorizados por sus padres, por lo cual para el caso de participación de menores de edad, las presentes Bases deberán ser aceptadas por sus padres, representantes legales o tutores ";
+            UpdateConcursante();
+
+        }
+
+        else if (objConc.concurso == "Responder Preguntas" && objConc.edad >= 60)
+        {
+            StatusClass = "alert-danger";
+            StatusMessage = DateTime.Now + ": El participante no tiene la edad requerida para participar. Debe ser menor de 60 años.";
+            Error();
+        }
+        else if (objConc.concurso == "Responder Preguntas" && objConc.edad < 18)
+        {
+            StatusClass = "alert-info";
+            StatusMessage = DateTime.Now + ": Participantes menores de 18 años deberán estar debidamente autorizados por sus padres, por lo cual para el caso de participación de menores de edad, las presentes Bases deberán ser aceptadas por sus padres, representantes legales o tutores ";
+            UpdateConcursante();
+        }
+        else if (objConc.concurso == "Responder Preguntas" && (objConc.edad >= 18 || objConc.edad < 60))
+        {
+            StatusClass = "alert-success";
+            StatusMessage = DateTime.Now + ": Puede participar del concurso de Responder Preguntas";
+            UpdateConcursante();
+
+        }
+        else
+        {
+            StatusClass = "alert-danger";
+            StatusMessage = DateTime.Now + ": Se ingresaron datos invalidos o no se completaron los datos";
+            Error();
+        }
+
+    }
+
+
+
 
     protected void UpdateConcursante()
     {
         objConcService.UpdateConcursante(objConc);
-        NavigationManager.NavigateTo("Concursante");
+        Console.WriteLine(StatusMessage);
+        NavigationManager.NavigateTo("ListConcursante");
+
 
     }
-    void Cancel()
+
+    protected void Cancelar()
     {
-        NavigationManager.NavigateTo("Concursante");
+        Console.WriteLine(StatusMessage);
+        NavigationManager.NavigateTo("ListConcursante");
+    }
+
+    protected void Error()
+    {
+        Console.WriteLine(StatusMessage);
+        NavigationManager.NavigateTo("EditConcursante");
     }
 }
+
